@@ -1,972 +1,396 @@
-import { WEBUI_API_BASE_URL, WEBUI_BASE_URL } from '$lib/constants';
-import { convertOpenApiToToolPayload } from '$lib/utils';
-import { getOpenAIModelsDirect } from './openai';
+import { OPENAI_API_BASE_URL, WEBUI_API_BASE_URL, WEBUI_BASE_URL } from '$lib/constants';
 
-import { parse } from 'yaml';
-import { toast } from 'svelte-sonner';
+export const getOpenAIConfig = async (token: string = '') => {
+	let error = null;
 
-export const getModels = async (
+	const res = await fetch(`${OPENAI_API_BASE_URL}/config`, {
+		method: 'GET',
+		headers: {
+			Accept: 'application/json',
+			'Content-Type': 'application/json',
+			...(token && { authorization: `Bearer ${token}` })
+		}
+	})
+		.then(async (res) => {
+			if (!res.ok) throw await res.json();
+			return res.json();
+		})
+		.catch((err) => {
+			console.error(err);
+			if ('detail' in err) {
+				error = err.detail;
+			} else {
+				error = 'Server connection failed';
+			}
+			return null;
+		});
+
+	if (error) {
+		throw error;
+	}
+
+	return res;
+};
+
+type OpenAIConfig = {
+	ENABLE_OPENAI_API: boolean;
+	OPENAI_API_BASE_URLS: string[];
+	OPENAI_API_KEYS: string[];
+	OPENAI_API_CONFIGS: object;
+};
+
+export const updateOpenAIConfig = async (token: string = '', config: OpenAIConfig) => {
+	let error = null;
+
+	const res = await fetch(`${OPENAI_API_BASE_URL}/config/update`, {
+		method: 'POST',
+		headers: {
+			Accept: 'application/json',
+			'Content-Type': 'application/json',
+			...(token && { authorization: `Bearer ${token}` })
+		},
+		body: JSON.stringify({
+			...config
+		})
+	})
+		.then(async (res) => {
+			if (!res.ok) throw await res.json();
+			return res.json();
+		})
+		.catch((err) => {
+			console.error(err);
+			if ('detail' in err) {
+				error = err.detail;
+			} else {
+				error = 'Server connection failed';
+			}
+			return null;
+		});
+
+	if (error) {
+		throw error;
+	}
+
+	return res;
+};
+
+export const getOpenAIUrls = async (token: string = '') => {
+	let error = null;
+
+	const res = await fetch(`${OPENAI_API_BASE_URL}/urls`, {
+		method: 'GET',
+		headers: {
+			Accept: 'application/json',
+			'Content-Type': 'application/json',
+			...(token && { authorization: `Bearer ${token}` })
+		}
+	})
+		.then(async (res) => {
+			if (!res.ok) throw await res.json();
+			return res.json();
+		})
+		.catch((err) => {
+			console.error(err);
+			if ('detail' in err) {
+				error = err.detail;
+			} else {
+				error = 'Server connection failed';
+			}
+			return null;
+		});
+
+	if (error) {
+		throw error;
+	}
+
+	return res.OPENAI_API_BASE_URLS;
+};
+
+export const updateOpenAIUrls = async (token: string = '', urls: string[]) => {
+	let error = null;
+
+	const res = await fetch(`${OPENAI_API_BASE_URL}/urls/update`, {
+		method: 'POST',
+		headers: {
+			Accept: 'application/json',
+			'Content-Type': 'application/json',
+			...(token && { authorization: `Bearer ${token}` })
+		},
+		body: JSON.stringify({
+			urls: urls
+		})
+	})
+		.then(async (res) => {
+			if (!res.ok) throw await res.json();
+			return res.json();
+		})
+		.catch((err) => {
+			console.error(err);
+			if ('detail' in err) {
+				error = err.detail;
+			} else {
+				error = 'Server connection failed';
+			}
+			return null;
+		});
+
+	if (error) {
+		throw error;
+	}
+
+	return res.OPENAI_API_BASE_URLS;
+};
+
+export const getOpenAIKeys = async (token: string = '') => {
+	let error = null;
+
+	const res = await fetch(`${OPENAI_API_BASE_URL}/keys`, {
+		method: 'GET',
+		headers: {
+			Accept: 'application/json',
+			'Content-Type': 'application/json',
+			...(token && { authorization: `Bearer ${token}` })
+		}
+	})
+		.then(async (res) => {
+			if (!res.ok) throw await res.json();
+			return res.json();
+		})
+		.catch((err) => {
+			console.error(err);
+			if ('detail' in err) {
+				error = err.detail;
+			} else {
+				error = 'Server connection failed';
+			}
+			return null;
+		});
+
+	if (error) {
+		throw error;
+	}
+
+	return res.OPENAI_API_KEYS;
+};
+
+export const updateOpenAIKeys = async (token: string = '', keys: string[]) => {
+	let error = null;
+
+	const res = await fetch(`${OPENAI_API_BASE_URL}/keys/update`, {
+		method: 'POST',
+		headers: {
+			Accept: 'application/json',
+			'Content-Type': 'application/json',
+			...(token && { authorization: `Bearer ${token}` })
+		},
+		body: JSON.stringify({
+			keys: keys
+		})
+	})
+		.then(async (res) => {
+			if (!res.ok) throw await res.json();
+			return res.json();
+		})
+		.catch((err) => {
+			console.error(err);
+			if ('detail' in err) {
+				error = err.detail;
+			} else {
+				error = 'Server connection failed';
+			}
+			return null;
+		});
+
+	if (error) {
+		throw error;
+	}
+
+	return res.OPENAI_API_KEYS;
+};
+
+export const getOpenAIModelsDirect = async (url: string, key: string) => {
+	let error = null;
+
+	const res = await fetch(`${url}/models`, {
+		method: 'GET',
+		headers: {
+			Accept: 'application/json',
+			'Content-Type': 'application/json',
+			...(key && { authorization: `Bearer ${key}` })
+		}
+	})
+		.then(async (res) => {
+			if (!res.ok) throw await res.json();
+			return res.json();
+		})
+		.catch((err) => {
+			error = `OpenAI: ${err?.error?.message ?? 'Network Problem'}`;
+			return [];
+		});
+
+	if (error) {
+		throw error;
+	}
+
+	return res;
+};
+
+export const getOpenAIModels = async (token: string, urlIdx?: number) => {
+	let error = null;
+
+	const res = await fetch(
+		`${OPENAI_API_BASE_URL}/models${typeof urlIdx === 'number' ? `/${urlIdx}` : ''}`,
+		{
+			method: 'GET',
+			headers: {
+				Accept: 'application/json',
+				'Content-Type': 'application/json',
+				...(token && { authorization: `Bearer ${token}` })
+			}
+		}
+	)
+		.then(async (res) => {
+			if (!res.ok) throw await res.json();
+			return res.json();
+		})
+		.catch((err) => {
+			error = `OpenAI: ${err?.error?.message ?? 'Network Problem'}`;
+			return [];
+		});
+
+	if (error) {
+		throw error;
+	}
+
+	return res;
+};
+
+export const verifyOpenAIConnection = async (
 	token: string = '',
-	connections: object | null = null,
-	base: boolean = false
+	connection: dict = {},
+	direct: boolean = false
 ) => {
+	const { url, key, config } = connection;
+	if (!url) {
+		throw 'OpenAI: URL is required';
+	}
+
 	let error = null;
-	const res = await fetch(`${WEBUI_BASE_URL}/api/models${base ? '/base' : ''}`, {
-		method: 'GET',
-		headers: {
-			Accept: 'application/json',
-			'Content-Type': 'application/json',
-			...(token && { authorization: `Bearer ${token}` })
-		}
-	})
-		.then(async (res) => {
-			if (!res.ok) throw await res.json();
-			return res.json();
+	let res = null;
+
+	if (direct) {
+		res = await fetch(`${url}/models`, {
+			method: 'GET',
+			headers: {
+				Accept: 'application/json',
+				Authorization: `Bearer ${key}`,
+				'Content-Type': 'application/json'
+			}
 		})
-		.catch((err) => {
-			error = err;
-			console.error(err);
-			return null;
-		});
-
-	if (error) {
-		throw error;
-	}
-
-	let models = res?.data ?? [];
-
-	if (connections && !base) {
-		let localModels = [];
-
-		if (connections) {
-			const OPENAI_API_BASE_URLS = connections.OPENAI_API_BASE_URLS;
-			const OPENAI_API_KEYS = connections.OPENAI_API_KEYS;
-			const OPENAI_API_CONFIGS = connections.OPENAI_API_CONFIGS;
-
-			const requests = [];
-			for (const idx in OPENAI_API_BASE_URLS) {
-				const url = OPENAI_API_BASE_URLS[idx];
-
-				if (idx.toString() in OPENAI_API_CONFIGS) {
-					const apiConfig = OPENAI_API_CONFIGS[idx.toString()] ?? {};
-
-					const enable = apiConfig?.enable ?? true;
-					const modelIds = apiConfig?.model_ids ?? [];
-
-					if (enable) {
-						if (modelIds.length > 0) {
-							const modelList = {
-								object: 'list',
-								data: modelIds.map((modelId) => ({
-									id: modelId,
-									name: modelId,
-									owned_by: 'openai',
-									openai: { id: modelId },
-									urlIdx: idx
-								}))
-							};
-
-							requests.push(
-								(async () => {
-									return modelList;
-								})()
-							);
-						} else {
-							requests.push(
-								(async () => {
-									return await getOpenAIModelsDirect(url, OPENAI_API_KEYS[idx])
-										.then((res) => {
-											return res;
-										})
-										.catch((err) => {
-											return {
-												object: 'list',
-												data: [],
-												urlIdx: idx
-											};
-										});
-								})()
-							);
-						}
-					} else {
-						requests.push(
-							(async () => {
-								return {
-									object: 'list',
-									data: [],
-									urlIdx: idx
-								};
-							})()
-						);
-					}
-				}
-			}
-
-			const responses = await Promise.all(requests);
-
-			for (const idx in responses) {
-				const response = responses[idx];
-				const apiConfig = OPENAI_API_CONFIGS[idx.toString()] ?? {};
-
-				let models = Array.isArray(response) ? response : (response?.data ?? []);
-				models = models.map((model) => ({ ...model, openai: { id: model.id }, urlIdx: idx }));
-
-				const prefixId = apiConfig.prefix_id;
-				if (prefixId) {
-					for (const model of models) {
-						model.id = `${prefixId}.${model.id}`;
-					}
-				}
-
-				const tags = apiConfig.tags;
-				if (tags) {
-					for (const model of models) {
-						model.tags = tags;
-					}
-				}
-
-				localModels = localModels.concat(models);
-			}
-		}
-
-		models = models.concat(
-			localModels.map((model) => ({
-				...model,
-				name: model?.name ?? model?.id,
-				direct: true
-			}))
-		);
-
-		// Remove duplicates
-		const modelsMap = {};
-		for (const model of models) {
-			modelsMap[model.id] = model;
-		}
-
-		models = Object.values(modelsMap);
-	}
-
-	return models;
-};
-
-type ChatCompletedForm = {
-	model: string;
-	messages: string[];
-	chat_id: string;
-	session_id: string;
-};
-
-export const chatCompleted = async (token: string, body: ChatCompletedForm) => {
-	let error = null;
-
-	const res = await fetch(`${WEBUI_BASE_URL}/api/chat/completed`, {
-		method: 'POST',
-		headers: {
-			Accept: 'application/json',
-			'Content-Type': 'application/json',
-			...(token && { authorization: `Bearer ${token}` })
-		},
-		body: JSON.stringify(body)
-	})
-		.then(async (res) => {
-			if (!res.ok) throw await res.json();
-			return res.json();
-		})
-		.catch((err) => {
-			console.error(err);
-			if ('detail' in err) {
-				error = err.detail;
-			} else {
-				error = err;
-			}
-			return null;
-		});
-
-	if (error) {
-		throw error;
-	}
-
-	return res;
-};
-
-type ChatActionForm = {
-	model: string;
-	messages: string[];
-	chat_id: string;
-};
-
-export const chatAction = async (token: string, action_id: string, body: ChatActionForm) => {
-	let error = null;
-
-	const res = await fetch(`${WEBUI_BASE_URL}/api/chat/actions/${action_id}`, {
-		method: 'POST',
-		headers: {
-			Accept: 'application/json',
-			'Content-Type': 'application/json',
-			...(token && { authorization: `Bearer ${token}` })
-		},
-		body: JSON.stringify(body)
-	})
-		.then(async (res) => {
-			if (!res.ok) throw await res.json();
-			return res.json();
-		})
-		.catch((err) => {
-			console.error(err);
-			if ('detail' in err) {
-				error = err.detail;
-			} else {
-				error = err;
-			}
-			return null;
-		});
-
-	if (error) {
-		throw error;
-	}
-
-	return res;
-};
-
-export const stopTask = async (token: string, id: string) => {
-	let error = null;
-
-	const res = await fetch(`${WEBUI_BASE_URL}/api/tasks/stop/${id}`, {
-		method: 'POST',
-		headers: {
-			Accept: 'application/json',
-			'Content-Type': 'application/json',
-			...(token && { authorization: `Bearer ${token}` })
-		}
-	})
-		.then(async (res) => {
-			if (!res.ok) throw await res.json();
-			return res.json();
-		})
-		.catch((err) => {
-			console.error(err);
-			if ('detail' in err) {
-				error = err.detail;
-			} else {
-				error = err;
-			}
-			return null;
-		});
-
-	if (error) {
-		throw error;
-	}
-
-	return res;
-};
-
-export const getTaskIdsByChatId = async (token: string, chat_id: string) => {
-	let error = null;
-
-	const res = await fetch(`${WEBUI_BASE_URL}/api/tasks/chat/${chat_id}`, {
-		method: 'GET',
-		headers: {
-			Accept: 'application/json',
-			'Content-Type': 'application/json',
-			...(token && { authorization: `Bearer ${token}` })
-		}
-	})
-		.then(async (res) => {
-			if (!res.ok) throw await res.json();
-			return res.json();
-		})
-		.catch((err) => {
-			console.error(err);
-			if ('detail' in err) {
-				error = err.detail;
-			} else {
-				error = err;
-			}
-			return null;
-		});
-
-	if (error) {
-		throw error;
-	}
-
-	return res;
-};
-
-export const getToolServerData = async (token: string, url: string) => {
-	let error = null;
-
-	const res = await fetch(`${url}`, {
-		method: 'GET',
-		headers: {
-			Accept: 'application/json',
-			'Content-Type': 'application/json',
-			...(token && { authorization: `Bearer ${token}` })
-		}
-	})
-		.then(async (res) => {
-			// Check if URL ends with .yaml or .yml to determine format
-			if (url.toLowerCase().endsWith('.yaml') || url.toLowerCase().endsWith('.yml')) {
-				if (!res.ok) throw await res.text();
-				const text = await res.text();
-				return parse(text);
-			} else {
+			.then(async (res) => {
 				if (!res.ok) throw await res.json();
 				return res.json();
-			}
-		})
-		.catch((err) => {
-			console.error(err);
-			if ('detail' in err) {
-				error = err.detail;
-			} else {
-				error = err;
-			}
-			return null;
-		});
-
-	if (error) {
-		throw error;
-	}
-
-	const data = {
-		openapi: res,
-		info: res.info,
-		specs: convertOpenApiToToolPayload(res)
-	};
-
-	console.log(data);
-	return data;
-};
-
-export const getToolServersData = async (i18n, servers: object[]) => {
-	return (
-		await Promise.all(
-			servers
-				.filter((server) => server?.config?.enable)
-				.map(async (server) => {
-					const data = await getToolServerData(
-						(server?.auth_type ?? 'bearer') === 'bearer' ? server?.key : localStorage.token,
-						(server?.path ?? '').includes('://')
-							? server?.path
-							: `${server?.url}${(server?.path ?? '').startsWith('/') ? '' : '/'}${server?.path}`
-					).catch((err) => {
-						toast.error(
-							i18n.t(`Failed to connect to {{URL}} OpenAPI tool server`, {
-								URL: (server?.path ?? '').includes('://')
-									? server?.path
-									: `${server?.url}${(server?.path ?? '').startsWith('/') ? '' : '/'}${server?.path}`
-							})
-						);
-						return null;
-					});
-
-					if (data) {
-						const { openapi, info, specs } = data;
-						return {
-							url: server?.url,
-							openapi: openapi,
-							info: info,
-							specs: specs
-						};
-					}
-				})
-		)
-	).filter((server) => server);
-};
-
-export const executeToolServer = async (
-	token: string,
-	url: string,
-	name: string,
-	params: Record<string, any>,
-	serverData: { openapi: any; info: any; specs: any }
-) => {
-	let error = null;
-
-	try {
-		// Find the matching operationId in the OpenAPI spec
-		const matchingRoute = Object.entries(serverData.openapi.paths).find(([_, methods]) =>
-			Object.entries(methods as any).some(([__, operation]: any) => operation.operationId === name)
-		);
-
-		if (!matchingRoute) {
-			throw new Error(`No matching route found for operationId: ${name}`);
-		}
-
-		const [routePath, methods] = matchingRoute;
-
-		const methodEntry = Object.entries(methods as any).find(
-			([_, operation]: any) => operation.operationId === name
-		);
-
-		if (!methodEntry) {
-			throw new Error(`No matching method found for operationId: ${name}`);
-		}
-
-		const [httpMethod, operation]: [string, any] = methodEntry;
-
-		// Split parameters by type
-		const pathParams: Record<string, any> = {};
-		const queryParams: Record<string, any> = {};
-		let bodyParams: any = {};
-
-		if (operation.parameters) {
-			operation.parameters.forEach((param: any) => {
-				const paramName = param.name;
-				const paramIn = param.in;
-				if (params.hasOwnProperty(paramName)) {
-					if (paramIn === 'path') {
-						pathParams[paramName] = params[paramName];
-					} else if (paramIn === 'query') {
-						queryParams[paramName] = params[paramName];
-					}
-				}
+			})
+			.catch((err) => {
+				error = `OpenAI: ${err?.error?.message ?? 'Network Problem'}`;
+				return [];
 			});
+
+		if (error) {
+			throw error;
 		}
-
-		let finalUrl = `${url}${routePath}`;
-
-		// Replace path parameters (`{param}`)
-		Object.entries(pathParams).forEach(([key, value]) => {
-			finalUrl = finalUrl.replace(new RegExp(`{${key}}`, 'g'), encodeURIComponent(value));
-		});
-
-		// Append query parameters to URL if any
-		if (Object.keys(queryParams).length > 0) {
-			const queryString = new URLSearchParams(
-				Object.entries(queryParams).map(([k, v]) => [k, String(v)])
-			).toString();
-			finalUrl += `?${queryString}`;
-		}
-
-		// Handle requestBody composite
-		if (operation.requestBody && operation.requestBody.content) {
-			const contentType = Object.keys(operation.requestBody.content)[0];
-			if (params !== undefined) {
-				bodyParams = params;
-			} else {
-				// Optional: Fallback or explicit error if body is expected but not provided
-				throw new Error(`Request body expected for operation '${name}' but none found.`);
-			}
-		}
-
-		// Prepare headers and request options
-		const headers: Record<string, string> = {
-			'Content-Type': 'application/json',
-			...(token && { authorization: `Bearer ${token}` })
-		};
-
-		let requestOptions: RequestInit = {
-			method: httpMethod.toUpperCase(),
-			headers
-		};
-
-		if (['post', 'put', 'patch'].includes(httpMethod.toLowerCase()) && operation.requestBody) {
-			requestOptions.body = JSON.stringify(bodyParams);
-		}
-
-		const res = await fetch(finalUrl, requestOptions);
-		if (!res.ok) {
-			const resText = await res.text();
-			throw new Error(`HTTP error! Status: ${res.status}. Message: ${resText}`);
-		}
-
-		return await res.json();
-	} catch (err: any) {
-		error = err.message;
-		console.error('API Request Error:', error);
-		return { error };
-	}
-};
-
-export const getTaskConfig = async (token: string = '') => {
-	let error = null;
-
-	const res = await fetch(`${WEBUI_BASE_URL}/api/v1/tasks/config`, {
-		method: 'GET',
-		headers: {
-			Accept: 'application/json',
-			'Content-Type': 'application/json',
-			...(token && { authorization: `Bearer ${token}` })
-		}
-	})
-		.then(async (res) => {
-			if (!res.ok) throw await res.json();
-			return res.json();
+	} else {
+		res = await fetch(`${OPENAI_API_BASE_URL}/verify`, {
+			method: 'POST',
+			headers: {
+				Accept: 'application/json',
+				Authorization: `Bearer ${token}`,
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({
+				url,
+				key,
+				config
+			})
 		})
-		.catch((err) => {
-			console.error(err);
-			error = err;
-			return null;
-		});
+			.then(async (res) => {
+				if (!res.ok) throw await res.json();
+				return res.json();
+			})
+			.catch((err) => {
+				error = `OpenAI: ${err?.error?.message ?? 'Network Problem'}`;
+				return [];
+			});
 
-	if (error) {
-		throw error;
+		if (error) {
+			throw error;
+		}
 	}
 
 	return res;
 };
 
-export const updateTaskConfig = async (token: string, config: object) => {
-	let error = null;
+const custombody = {
+	message:
+		"recette de tarte citron et couscous if you're getting the information from the chunks ,you **must ** Indicate in which chunk you found each piece of information in terms of order, and give the result in the format information §text n§\nfor example:\nL'évolution en 2019 montre une augmentation de 157% par rapport à 2018, avec un chiffre de 385 869 §text 2§\nL'évolution en 2020 montre une augmentation de xx par rapport à xx , avec un chiffre de xx §text 1§\nif you're getting the information from the images ,you **must ** Indicate in which image you found each piece of information using the filename associated with each image, and give the result in the format \" information §image filename§\"\nfor example:\nL'évolution en 2019 montre une augmentation de 157% par rapport à 2018, avec un chiffre de 385 869 §image 123123b231_148_sub_image_1.png§\nL'évolution en 2020 montre une augmentation de xx par rapport à xx , avec un chiffre de xx §image 1252a3b1123_195_sub_image_2.png§",
 
-	const res = await fetch(`${WEBUI_BASE_URL}/api/v1/tasks/config/update`, {
-		method: 'POST',
-		headers: {
-			Accept: 'application/json',
-			'Content-Type': 'application/json',
-			...(token && { authorization: `Bearer ${token}` })
-		},
-		body: JSON.stringify(config)
-	})
-		.then(async (res) => {
-			if (!res.ok) throw await res.json();
-			return res.json();
-		})
-		.catch((err) => {
-			console.error(err);
-			if ('detail' in err) {
-				error = err.detail;
-			} else {
-				error = err;
-			}
-			return null;
-		});
-
-	if (error) {
-		throw error;
-	}
-
-	return res;
+	mode: 'DocQuery',
+	instruction:
+		'You are a helpful assistant that follows the guided instructions,\nTu dois toujours répondre uniquement à partir du contexte extrait via les recherches.\nTu dois toujours répondre en utilisant la langue dans laquelle a été exprimée la question de l\'utilisateur.\n***INSTRUCTIONS :\nINSTRUCTIONS GÉNÉRALES :\n1. Adoptez systématiquement une approche de raisonnement étape par étape.\n2. Utilisez un langage clair, précis et professionnel.\n3. Assurez-vous que vos réponses sont complètes, bien structurées et exemptes d\'ambiguïtés.\nPROCESSUS DE RÉPONSE :\n1. Analyse de la requête :\n   - Tu dois toujours décomposer la question posée en étapes logiques selon une approche de raisonnement Step-by-Step\n2. Processus de recherche :\n2.1. Tu dois toujours et obligatoirement exécuter une première recherche via l\'outil de recherche sur les données client en UTILISANT la requête d\'origine sans reformulation.\n- Tu dois toujours générer 4 requêtes reformulées au minimum, tu ne dois pas dépasser 6 requêtes\n-Tu ne dois pas afficher les requêtes. \n2.2. Tu dois ensuite toujours lancer obligatoirement plusieurs les recherches granulaires via l\'outil de recherche en générant 4 requêtes reformulées au minimum  (keyword based decomposition optimized for Embedding search) couvrant toutes les notions et termes spécifiés dans la question de l\'utilisateur en suivant l\'exemple de reformulation ci-dessous :\n** Exemple de reformulation *****\nUser Query : "classification des paiements en espèces pour la partie intérêts du passif locatif dans l\'état des flux de trésorerie selon IAS 7"\nRequête 1 : for the reformulated query n°1, you have to use the original given user Query \nRequête 2 : "intérêts versés passif locatif selon IAS 7"" \nRequête 3 : "état de flux de trésorerie pour intérêts versés IFRS 16 relatif au passif locatif"\nRequête 4 : "paiements en espèces pour intérêts du passif locatif"\n- Tu dois toujours lancer les recherches associées aux requêtes reformulées, aucune réponse ne peut être générée sans recherche.\n\nif you\'re getting  the information from the chunks ,you **must ** Indicate in which chunk you found each piece of information in terms of order,and give its respective page number present in the markup <page> and give the result in the format " information §text n,page k§" \nfor example:\nL\'évolution en 2019 montre une augmentation de 157% par rapport à 2018, avec un chiffre de 385 869 §text 2, page 3§\nL\'évolution en 2020 montre une augmentation de xx par rapport à xx , avec un chiffre de xx §text 1,page 4§\nif you\'re getting  the information from the images ,you **must ** Indicate in which image you found each piece of information using the filename associated with each image, and give the result in the format " information §image filename§" \nfor example:\nL\'évolution en 2019 montre une augmentation de 157% par rapport à 2018, avec un chiffre de 385 869 §image 123123b231_148_sub_image_1.png§\nL\'évolution en 2020 montre une augmentation de xx par rapport à xx , avec un chiffre de xx §image 1252a3b1123_195_sub_image_2.png§\nThe response and the query to the tool must be in \'French\' language\nThe the query to the tool must be done using key words instead of a synthesized question\n\npour les recherches web:\n**Citation des sources\nTu dois TOUJOURS indiquer l\'URL source utilisée pour chaque recherche en utilisant le format suivant:\n🔎 <a href="[URL_COMPLETE]" target="_blank" rel="noopener">[TITRE_DESCRIPTIF]</a>\nBonnes pratiques pour les liens:\n*Utiliser un titre descriptif et pertinent pour le lien\n*Inclure target="_blank" pour ouvrir dans un nouvel onglet\n*Inclure rel="noopener" pour la sécurité\n*Placer la source immédiatement après l\'information citée\n*Si plusieurs sources sont utilisées, les grouper à la fin de la réponse',
+	brain_ids: ['67fe6bf1807b8b18fb034d60'],
+	questionId: '5a4a273a400ebe84mbte9buc',
+	search_web: 'off',
+	rag_type: 'AdvancedRag',
+	isCache: '',
+	metadata: {
+		user_id: '67079e3c211644a5bcad854c',
+		message_id: '38301db71da5b4f2mbte9buc',
+		conversation_id: '683da9d06f477e987d37803d',
+		mode: 'DocQuery',
+		app_source: 'chat',
+		username: 'Emna  Belhaj|ebelhaj@yellowsys.fr'
+	},
+	conversation_id: '683da9d06f477e987d37803d',
+	vectorstore_name: 'vectorstoredev',
+	chatbot_name: 'gpt-4o-mini',
+	generate_standalone_question: 'no_history',
+	enable_multilingual: false,
+	mode_expert: false,
+	retryCount: 0,
+	chat_mode: 'streaming',
+	graphml_path: '',
+	languages: ['fr', 'fr'],
+	synonym_list: [],
+	max_tokens: 4000,
+	temperature: 0,
+	max_retries: 0,
+	top_k: 4,
+	score_seuil: 0,
+	retrieval_qa_prompt:
+		'\n\nContexte:\n**************\n{context}\n**************\n\nQuestion: {question}\nRéponse:',
+	user_instruction: '',
+	enable_rag_fusion: false,
+	number_of_question: 2,
+	rewording_prompt:
+		'you have to decompose the following user query \n\n{question}\n\n into multi-step query optimized to be used as rag query in order to facilitate the construction of a reasoning chain.',
 };
 
-export const generateTitle = async (
+export const chatCompletion = async (
 	token: string = '',
-	model: string,
-	messages: object[],
-	chat_id?: string
-) => {
-	let error = null;
-
-	const res = await fetch(`${WEBUI_BASE_URL}/api/v1/tasks/title/completions`, {
-		method: 'POST',
-		headers: {
-			Accept: 'application/json',
-			'Content-Type': 'application/json',
-			Authorization: `Bearer ${token}`
-		},
-		body: JSON.stringify({
-			model: model,
-			messages: messages,
-			...(chat_id && { chat_id: chat_id })
-		})
-	})
-		.then(async (res) => {
-			if (!res.ok) throw await res.json();
-			return res.json();
-		})
-		.catch((err) => {
-			console.error(err);
-			if ('detail' in err) {
-				error = err.detail;
-			}
-			return null;
-		});
-
-	if (error) {
-		throw error;
-	}
-
-	try {
-		// Step 1: Safely extract the response string
-		const response = res?.choices[0]?.message?.content ?? '';
-
-		// Step 2: Attempt to fix common JSON format issues like single quotes
-		const sanitizedResponse = response.replace(/['‘’`]/g, '"'); // Convert single quotes to double quotes for valid JSON
-
-		// Step 3: Find the relevant JSON block within the response
-		const jsonStartIndex = sanitizedResponse.indexOf('{');
-		const jsonEndIndex = sanitizedResponse.lastIndexOf('}');
-
-		// Step 4: Check if we found a valid JSON block (with both `{` and `}`)
-		if (jsonStartIndex !== -1 && jsonEndIndex !== -1) {
-			const jsonResponse = sanitizedResponse.substring(jsonStartIndex, jsonEndIndex + 1);
-
-			// Step 5: Parse the JSON block
-			const parsed = JSON.parse(jsonResponse);
-
-			// Step 6: If there's a "tags" key, return the tags array; otherwise, return an empty array
-			if (parsed && parsed.title) {
-				return parsed.title;
-			} else {
-				return null;
-			}
-		}
-
-		// If no valid JSON block found, return an empty array
-		return null;
-	} catch (e) {
-		// Catch and safely return empty array on any parsing errors
-		console.error('Failed to parse response: ', e);
-		return null;
-	}
-};
-
-export const generateFollowUps = async (
-	token: string = '',
-	model: string,
-	messages: string,
-	chat_id?: string
-) => {
-	let error = null;
-
-	const res = await fetch(`${WEBUI_BASE_URL}/api/v1/tasks/follow_ups/completions`, {
-		method: 'POST',
-		headers: {
-			Accept: 'application/json',
-			'Content-Type': 'application/json',
-			Authorization: `Bearer ${token}`
-		},
-		body: JSON.stringify({
-			model: model,
-			messages: messages,
-			...(chat_id && { chat_id: chat_id })
-		})
-	})
-		.then(async (res) => {
-			if (!res.ok) throw await res.json();
-			return res.json();
-		})
-		.catch((err) => {
-			console.error(err);
-			if ('detail' in err) {
-				error = err.detail;
-			}
-			return null;
-		});
-
-	if (error) {
-		throw error;
-	}
-
-	try {
-		// Step 1: Safely extract the response string
-		const response = res?.choices[0]?.message?.content ?? '';
-
-		// Step 2: Attempt to fix common JSON format issues like single quotes
-		const sanitizedResponse = response.replace(/['‘’`]/g, '"'); // Convert single quotes to double quotes for valid JSON
-
-		// Step 3: Find the relevant JSON block within the response
-		const jsonStartIndex = sanitizedResponse.indexOf('{');
-		const jsonEndIndex = sanitizedResponse.lastIndexOf('}');
-
-		// Step 4: Check if we found a valid JSON block (with both `{` and `}`)
-		if (jsonStartIndex !== -1 && jsonEndIndex !== -1) {
-			const jsonResponse = sanitizedResponse.substring(jsonStartIndex, jsonEndIndex + 1);
-
-			// Step 5: Parse the JSON block
-			const parsed = JSON.parse(jsonResponse);
-
-			// Step 6: If there's a "follow_ups" key, return the follow_ups array; otherwise, return an empty array
-			if (parsed && parsed.follow_ups) {
-				return Array.isArray(parsed.follow_ups) ? parsed.follow_ups : [];
-			} else {
-				return [];
-			}
-		}
-
-		// If no valid JSON block found, return an empty array
-		return [];
-	} catch (e) {
-		// Catch and safely return empty array on any parsing errors
-		console.error('Failed to parse response: ', e);
-		return [];
-	}
-};
-
-export const generateTags = async (
-	token: string = '',
-	model: string,
-	messages: string,
-	chat_id?: string
-) => {
-	let error = null;
-
-	const res = await fetch(`${WEBUI_BASE_URL}/api/v1/tasks/tags/completions`, {
-		method: 'POST',
-		headers: {
-			Accept: 'application/json',
-			'Content-Type': 'application/json',
-			Authorization: `Bearer ${token}`
-		},
-		body: JSON.stringify({
-			model: model,
-			messages: messages,
-			...(chat_id && { chat_id: chat_id })
-		})
-	})
-		.then(async (res) => {
-			if (!res.ok) throw await res.json();
-			return res.json();
-		})
-		.catch((err) => {
-			console.error(err);
-			if ('detail' in err) {
-				error = err.detail;
-			}
-			return null;
-		});
-
-	if (error) {
-		throw error;
-	}
-
-	try {
-		// Step 1: Safely extract the response string
-		const response = res?.choices[0]?.message?.content ?? '';
-
-		// Step 2: Attempt to fix common JSON format issues like single quotes
-		const sanitizedResponse = response.replace(/['‘’`]/g, '"'); // Convert single quotes to double quotes for valid JSON
-
-		// Step 3: Find the relevant JSON block within the response
-		const jsonStartIndex = sanitizedResponse.indexOf('{');
-		const jsonEndIndex = sanitizedResponse.lastIndexOf('}');
-
-		// Step 4: Check if we found a valid JSON block (with both `{` and `}`)
-		if (jsonStartIndex !== -1 && jsonEndIndex !== -1) {
-			const jsonResponse = sanitizedResponse.substring(jsonStartIndex, jsonEndIndex + 1);
-
-			// Step 5: Parse the JSON block
-			const parsed = JSON.parse(jsonResponse);
-
-			// Step 6: If there's a "tags" key, return the tags array; otherwise, return an empty array
-			if (parsed && parsed.tags) {
-				return Array.isArray(parsed.tags) ? parsed.tags : [];
-			} else {
-				return [];
-			}
-		}
-
-		// If no valid JSON block found, return an empty array
-		return [];
-	} catch (e) {
-		// Catch and safely return empty array on any parsing errors
-		console.error('Failed to parse response: ', e);
-		return [];
-	}
-};
-
-export const generateEmoji = async (
-	token: string = '',
-	model: string,
-	prompt: string,
-	chat_id?: string
-) => {
-	let error = null;
-
-	const res = await fetch(`${WEBUI_BASE_URL}/api/v1/tasks/emoji/completions`, {
-		method: 'POST',
-		headers: {
-			Accept: 'application/json',
-			'Content-Type': 'application/json',
-			Authorization: `Bearer ${token}`
-		},
-		body: JSON.stringify({
-			model: model,
-			prompt: prompt,
-			...(chat_id && { chat_id: chat_id })
-		})
-	})
-		.then(async (res) => {
-			if (!res.ok) throw await res.json();
-			return res.json();
-		})
-		.catch((err) => {
-			console.error(err);
-			if ('detail' in err) {
-				error = err.detail;
-			}
-			return null;
-		});
-
-	if (error) {
-		throw error;
-	}
-
-	const response = res?.choices[0]?.message?.content.replace(/["']/g, '') ?? null;
-
-	if (response) {
-		if (/\p{Extended_Pictographic}/u.test(response)) {
-			return response.match(/\p{Extended_Pictographic}/gu)[0];
-		}
-	}
-
-	return null;
-};
-
-export const generateQueries = async (
-	token: string = '',
-	model: string,
-	messages: object[],
-	prompt: string,
-	type?: string = 'web_search'
-) => {
-	let error = null;
-
-	const res = await fetch(`${WEBUI_BASE_URL}/api/v1/tasks/queries/completions`, {
-		method: 'POST',
-		headers: {
-			Accept: 'application/json',
-			'Content-Type': 'application/json',
-			Authorization: `Bearer ${token}`
-		},
-		body: JSON.stringify({
-			model: model,
-			messages: messages,
-			prompt: prompt,
-			type: type
-		})
-	})
-		.then(async (res) => {
-			if (!res.ok) throw await res.json();
-			return res.json();
-		})
-		.catch((err) => {
-			console.error(err);
-			if ('detail' in err) {
-				error = err.detail;
-			}
-			return null;
-		});
-
-	if (error) {
-		throw error;
-	}
-
-	// Step 1: Safely extract the response string
-	const response = res?.choices[0]?.message?.content ?? '';
-
-	try {
-		const jsonStartIndex = response.indexOf('{');
-		const jsonEndIndex = response.lastIndexOf('}');
-
-		if (jsonStartIndex !== -1 && jsonEndIndex !== -1) {
-			const jsonResponse = response.substring(jsonStartIndex, jsonEndIndex + 1);
-
-			// Step 5: Parse the JSON block
-			const parsed = JSON.parse(jsonResponse);
-
-			// Step 6: If there's a "queries" key, return the queries array; otherwise, return an empty array
-			if (parsed && parsed.queries) {
-				return Array.isArray(parsed.queries) ? parsed.queries : [];
-			} else {
-				return [];
-			}
-		}
-
-		// If no valid JSON block found, return response as is
-		return [response];
-	} catch (e) {
-		// Catch and safely return empty array on any parsing errors
-		console.error('Failed to parse response: ', e);
-		return [response];
-	}
-};
-
-export const generateAutoCompletion = async (
-	token: string = '',
-	model: string,
-	prompt: string,
-	messages?: object[],
-	type: string = 'search query'
-) => {
+	body: object,
+	url: string = `${WEBUI_BASE_URL}/api`
+): Promise<[Response | null, AbortController]> => {
 	const controller = new AbortController();
 	let error = null;
 
-	const res = await fetch(`${WEBUI_BASE_URL}/api/v1/tasks/auto/completions`, {
+	const res = await fetch('https://frfrwalabaidevmetachatbotapi0001.azurewebsites.net/chatbots/chat', {
 		signal: controller.signal,
 		method: 'POST',
 		headers: {
-			Accept: 'application/json',
-			'Content-Type': 'application/json',
-			Authorization: `Bearer ${token}`
+			Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhemVydHkiLCJleHAiOjE3NDk3NDQ3NTZ9.oPRBtq57JOYuQZBosC_pgk6xVQHQfZV5v1Tm52ibnYE`,
+			'Content-Type': 'application/json'
 		},
-		body: JSON.stringify({
-			model: model,
-			prompt: prompt,
-			...(messages && { messages: messages }),
-			type: type,
-			stream: false
-		})
-	})
-		.then(async (res) => {
-			if (!res.ok) throw await res.json();
-			return res.json();
-		})
-		.catch((err) => {
-			console.error(err);
-			if ('detail' in err) {
-				error = err.detail;
-			}
-			return null;
-		});
-
-	if (error) {
-		throw error;
-	}
-
-	const response = res?.choices[0]?.message?.content ?? '';
-
-	try {
-		const jsonStartIndex = response.indexOf('{');
-		const jsonEndIndex = response.lastIndexOf('}');
-
-		if (jsonStartIndex !== -1 && jsonEndIndex !== -1) {
-			const jsonResponse = response.substring(jsonStartIndex, jsonEndIndex + 1);
-
-			// Step 5: Parse the JSON block
-			const parsed = JSON.parse(jsonResponse);
-
-			// Step 6: If there's a "queries" key, return the queries array; otherwise, return an empty array
-			if (parsed && parsed.text) {
-				return parsed.text;
-			} else {
-				return '';
-			}
-		}
-
-		// If no valid JSON block found, return response as is
-		return response;
-	} catch (e) {
-		// Catch and safely return empty array on any parsing errors
-		console.error('Failed to parse response: ', e);
-		return response;
-	}
-};
-
-export const generateMoACompletion = async (
-	token: string = '',
-	model: string,
-	prompt: string,
-	responses: string[]
-) => {
-	const controller = new AbortController();
-	let error = null;
-
-	const res = await fetch(`${WEBUI_BASE_URL}/api/v1/tasks/moa/completions`, {
-		signal: controller.signal,
-		method: 'POST',
-		headers: {
-			Accept: 'application/json',
-			'Content-Type': 'application/json',
-			Authorization: `Bearer ${token}`
-		},
-		body: JSON.stringify({
-			model: model,
-			prompt: prompt,
-			responses: responses,
-			stream: true
-		})
+		body: JSON.stringify(custombody)
 	}).catch((err) => {
 		console.error(err);
 		error = err;
@@ -980,314 +404,27 @@ export const generateMoACompletion = async (
 	return [res, controller];
 };
 
-export const getPipelinesList = async (token: string = '') => {
-	let error = null;
-
-	const res = await fetch(`${WEBUI_BASE_URL}/api/v1/pipelines/list`, {
-		method: 'GET',
-		headers: {
-			Accept: 'application/json',
-			'Content-Type': 'application/json',
-			...(token && { authorization: `Bearer ${token}` })
-		}
-	})
-		.then(async (res) => {
-			if (!res.ok) throw await res.json();
-			return res.json();
-		})
-		.catch((err) => {
-			console.error(err);
-			error = err;
-			return null;
-		});
-
-	if (error) {
-		throw error;
-	}
-
-	let pipelines = res?.data ?? [];
-	return pipelines;
-};
-
-export const uploadPipeline = async (token: string, file: File, urlIdx: string) => {
-	let error = null;
-
-	// Create a new FormData object to handle the file upload
-	const formData = new FormData();
-	formData.append('file', file);
-	formData.append('urlIdx', urlIdx);
-
-	const res = await fetch(`${WEBUI_BASE_URL}/api/v1/pipelines/upload`, {
-		method: 'POST',
-		headers: {
-			...(token && { authorization: `Bearer ${token}` })
-			// 'Content-Type': 'multipart/form-data' is not needed as Fetch API will set it automatically
-		},
-		body: formData
-	})
-		.then(async (res) => {
-			if (!res.ok) throw await res.json();
-			return res.json();
-		})
-		.catch((err) => {
-			console.error(err);
-			if ('detail' in err) {
-				error = err.detail;
-			} else {
-				error = err;
-			}
-			return null;
-		});
-
-	if (error) {
-		throw error;
-	}
-
-	return res;
-};
-
-export const downloadPipeline = async (token: string, url: string, urlIdx: string) => {
-	let error = null;
-
-	const res = await fetch(`${WEBUI_BASE_URL}/api/v1/pipelines/add`, {
-		method: 'POST',
-		headers: {
-			Accept: 'application/json',
-			'Content-Type': 'application/json',
-			...(token && { authorization: `Bearer ${token}` })
-		},
-		body: JSON.stringify({
-			url: url,
-			urlIdx: urlIdx
-		})
-	})
-		.then(async (res) => {
-			if (!res.ok) throw await res.json();
-			return res.json();
-		})
-		.catch((err) => {
-			console.error(err);
-			if ('detail' in err) {
-				error = err.detail;
-			} else {
-				error = err;
-			}
-			return null;
-		});
-
-	if (error) {
-		throw error;
-	}
-
-	return res;
-};
-
-export const deletePipeline = async (token: string, id: string, urlIdx: string) => {
-	let error = null;
-
-	const res = await fetch(`${WEBUI_BASE_URL}/api/v1/pipelines/delete`, {
-		method: 'DELETE',
-		headers: {
-			Accept: 'application/json',
-			'Content-Type': 'application/json',
-			...(token && { authorization: `Bearer ${token}` })
-		},
-		body: JSON.stringify({
-			id: id,
-			urlIdx: urlIdx
-		})
-	})
-		.then(async (res) => {
-			if (!res.ok) throw await res.json();
-			return res.json();
-		})
-		.catch((err) => {
-			console.error(err);
-			if ('detail' in err) {
-				error = err.detail;
-			} else {
-				error = err;
-			}
-			return null;
-		});
-
-	if (error) {
-		throw error;
-	}
-
-	return res;
-};
-
-export const getPipelines = async (token: string, urlIdx?: string) => {
-	let error = null;
-
-	const searchParams = new URLSearchParams();
-	if (urlIdx !== undefined) {
-		searchParams.append('urlIdx', urlIdx);
-	}
-
-	const res = await fetch(`${WEBUI_BASE_URL}/api/v1/pipelines/?${searchParams.toString()}`, {
-		method: 'GET',
-		headers: {
-			Accept: 'application/json',
-			'Content-Type': 'application/json',
-			...(token && { authorization: `Bearer ${token}` })
-		}
-	})
-		.then(async (res) => {
-			if (!res.ok) throw await res.json();
-			return res.json();
-		})
-		.catch((err) => {
-			console.error(err);
-			error = err;
-			return null;
-		});
-
-	if (error) {
-		throw error;
-	}
-
-	let pipelines = res?.data ?? [];
-	return pipelines;
-};
-
-export const getPipelineValves = async (token: string, pipeline_id: string, urlIdx: string) => {
-	let error = null;
-
-	const searchParams = new URLSearchParams();
-	if (urlIdx !== undefined) {
-		searchParams.append('urlIdx', urlIdx);
-	}
-
-	const res = await fetch(
-		`${WEBUI_BASE_URL}/api/v1/pipelines/${pipeline_id}/valves?${searchParams.toString()}`,
-		{
-			method: 'GET',
-			headers: {
-				Accept: 'application/json',
-				'Content-Type': 'application/json',
-				...(token && { authorization: `Bearer ${token}` })
-			}
-		}
-	)
-		.then(async (res) => {
-			if (!res.ok) throw await res.json();
-			return res.json();
-		})
-		.catch((err) => {
-			console.error(err);
-			error = err;
-			return null;
-		});
-
-	if (error) {
-		throw error;
-	}
-
-	return res;
-};
-
-export const getPipelineValvesSpec = async (token: string, pipeline_id: string, urlIdx: string) => {
-	let error = null;
-
-	const searchParams = new URLSearchParams();
-	if (urlIdx !== undefined) {
-		searchParams.append('urlIdx', urlIdx);
-	}
-
-	const res = await fetch(
-		`${WEBUI_BASE_URL}/api/v1/pipelines/${pipeline_id}/valves/spec?${searchParams.toString()}`,
-		{
-			method: 'GET',
-			headers: {
-				Accept: 'application/json',
-				'Content-Type': 'application/json',
-				...(token && { authorization: `Bearer ${token}` })
-			}
-		}
-	)
-		.then(async (res) => {
-			if (!res.ok) throw await res.json();
-			return res.json();
-		})
-		.catch((err) => {
-			console.error(err);
-			error = err;
-			return null;
-		});
-
-	if (error) {
-		throw error;
-	}
-
-	return res;
-};
-
-export const updatePipelineValves = async (
+export const generateOpenAIChatCompletion = async (
 	token: string = '',
-	pipeline_id: string,
-	valves: object,
-	urlIdx: string
+	body: object,
+	url: string = `${WEBUI_BASE_URL}/api`
 ) => {
 	let error = null;
 
-	const searchParams = new URLSearchParams();
-	if (urlIdx !== undefined) {
-		searchParams.append('urlIdx', urlIdx);
-	}
-
-	const res = await fetch(
-		`${WEBUI_BASE_URL}/api/v1/pipelines/${pipeline_id}/valves/update?${searchParams.toString()}`,
-		{
-			method: 'POST',
-			headers: {
-				Accept: 'application/json',
-				'Content-Type': 'application/json',
-				...(token && { authorization: `Bearer ${token}` })
-			},
-			body: JSON.stringify(valves)
-		}
-	)
-		.then(async (res) => {
-			if (!res.ok) throw await res.json();
-			return res.json();
-		})
-		.catch((err) => {
-			console.error(err);
-
-			if ('detail' in err) {
-				error = err.detail;
-			} else {
-				error = err;
-			}
-			return null;
-		});
-
-	if (error) {
-		throw error;
-	}
-
-	return res;
-};
-
-export const getBackendConfig = async () => {
-	let error = null;
-
-	const res = await fetch(`${WEBUI_BASE_URL}/api/config`, {
-		method: 'GET',
-		credentials: 'include',
+	const res = await fetch('https://frfrwalabaidevmetachatbotapi0001.azurewebsites.net/chatbots/chat', {
+		method: 'POST',
 		headers: {
+			Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhemVydHkiLCJleHAiOjE3NDk3NDQ3NTZ9.oPRBtq57JOYuQZBosC_pgk6xVQHQfZV5v1Tm52ibnYE`,
 			'Content-Type': 'application/json'
-		}
+		},
+		body: JSON.stringify(custombody)
 	})
 		.then(async (res) => {
 			if (!res.ok) throw await res.json();
 			return res.json();
 		})
 		.catch((err) => {
-			console.error(err);
-			error = err;
+			error = `${err?.detail ?? err}`;
 			return null;
 		});
 
@@ -1297,300 +434,30 @@ export const getBackendConfig = async () => {
 
 	return res;
 };
-
-export const getChangelog = async () => {
-	let error = null;
-
-	const res = await fetch(`${WEBUI_BASE_URL}/api/changelog`, {
-		method: 'GET',
-		headers: {
-			'Content-Type': 'application/json'
-		}
-	})
-		.then(async (res) => {
-			if (!res.ok) throw await res.json();
-			return res.json();
-		})
-		.catch((err) => {
-			console.error(err);
-			error = err;
-			return null;
-		});
-
-	if (error) {
-		throw error;
-	}
-
-	return res;
-};
-
-export const getVersionUpdates = async (token: string) => {
-	let error = null;
-
-	const res = await fetch(`${WEBUI_BASE_URL}/api/version/updates`, {
-		method: 'GET',
-		headers: {
-			'Content-Type': 'application/json',
-			Authorization: `Bearer ${token}`
-		}
-	})
-		.then(async (res) => {
-			if (!res.ok) throw await res.json();
-			return res.json();
-		})
-		.catch((err) => {
-			console.error(err);
-			error = err;
-			return null;
-		});
-
-	if (error) {
-		throw error;
-	}
-
-	return res;
-};
-
-export const getModelFilterConfig = async (token: string) => {
-	let error = null;
-
-	const res = await fetch(`${WEBUI_BASE_URL}/api/config/model/filter`, {
-		method: 'GET',
-		headers: {
-			'Content-Type': 'application/json',
-			Authorization: `Bearer ${token}`
-		}
-	})
-		.then(async (res) => {
-			if (!res.ok) throw await res.json();
-			return res.json();
-		})
-		.catch((err) => {
-			console.error(err);
-			error = err;
-			return null;
-		});
-
-	if (error) {
-		throw error;
-	}
-
-	return res;
-};
-
-export const updateModelFilterConfig = async (
-	token: string,
-	enabled: boolean,
-	models: string[]
+export const synthesizeOpenAISpeech = async (
+	token: string = '',
+	speaker: string = 'alloy',
+	text: string = '',
+	model: string = 'tts-1'
 ) => {
 	let error = null;
 
-	const res = await fetch(`${WEBUI_BASE_URL}/api/config/model/filter`, {
+	const res = await fetch(`${OPENAI_API_BASE_URL}/audio/speech`, {
 		method: 'POST',
 		headers: {
-			'Content-Type': 'application/json',
-			Authorization: `Bearer ${token}`
+			Authorization: `Bearer ${token}`,
+			'Content-Type': 'application/json'
 		},
 		body: JSON.stringify({
-			enabled: enabled,
-			models: models
+			model: model,
+			input: text,
+			voice: speaker
 		})
-	})
-		.then(async (res) => {
-			if (!res.ok) throw await res.json();
-			return res.json();
-		})
-		.catch((err) => {
-			console.error(err);
-			error = err;
-			return null;
-		});
-
-	if (error) {
-		throw error;
-	}
-
-	return res;
-};
-
-export const getWebhookUrl = async (token: string) => {
-	let error = null;
-
-	const res = await fetch(`${WEBUI_BASE_URL}/api/webhook`, {
-		method: 'GET',
-		headers: {
-			'Content-Type': 'application/json',
-			Authorization: `Bearer ${token}`
-		}
-	})
-		.then(async (res) => {
-			if (!res.ok) throw await res.json();
-			return res.json();
-		})
-		.catch((err) => {
-			console.error(err);
-			error = err;
-			return null;
-		});
-
-	if (error) {
-		throw error;
-	}
-
-	return res.url;
-};
-
-export const updateWebhookUrl = async (token: string, url: string) => {
-	let error = null;
-
-	const res = await fetch(`${WEBUI_BASE_URL}/api/webhook`, {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-			Authorization: `Bearer ${token}`
-		},
-		body: JSON.stringify({
-			url: url
-		})
-	})
-		.then(async (res) => {
-			if (!res.ok) throw await res.json();
-			return res.json();
-		})
-		.catch((err) => {
-			console.error(err);
-			error = err;
-			return null;
-		});
-
-	if (error) {
-		throw error;
-	}
-
-	return res.url;
-};
-
-export const getCommunitySharingEnabledStatus = async (token: string) => {
-	let error = null;
-
-	const res = await fetch(`${WEBUI_BASE_URL}/api/community_sharing`, {
-		method: 'GET',
-		headers: {
-			'Content-Type': 'application/json',
-			Authorization: `Bearer ${token}`
-		}
-	})
-		.then(async (res) => {
-			if (!res.ok) throw await res.json();
-			return res.json();
-		})
-		.catch((err) => {
-			console.error(err);
-			error = err;
-			return null;
-		});
-
-	if (error) {
-		throw error;
-	}
-
-	return res;
-};
-
-export const toggleCommunitySharingEnabledStatus = async (token: string) => {
-	let error = null;
-
-	const res = await fetch(`${WEBUI_BASE_URL}/api/community_sharing/toggle`, {
-		method: 'GET',
-		headers: {
-			'Content-Type': 'application/json',
-			Authorization: `Bearer ${token}`
-		}
-	})
-		.then(async (res) => {
-			if (!res.ok) throw await res.json();
-			return res.json();
-		})
-		.catch((err) => {
-			console.error(err);
-			error = err.detail;
-			return null;
-		});
-
-	if (error) {
-		throw error;
-	}
-
-	return res;
-};
-
-export const getModelConfig = async (token: string): Promise<GlobalModelConfig> => {
-	let error = null;
-
-	const res = await fetch(`${WEBUI_BASE_URL}/api/config/models`, {
-		method: 'GET',
-		headers: {
-			'Content-Type': 'application/json',
-			Authorization: `Bearer ${token}`
-		}
-	})
-		.then(async (res) => {
-			if (!res.ok) throw await res.json();
-			return res.json();
-		})
-		.catch((err) => {
-			console.error(err);
-			error = err;
-			return null;
-		});
-
-	if (error) {
-		throw error;
-	}
-
-	return res.models;
-};
-
-export interface ModelConfig {
-	id: string;
-	name: string;
-	meta: ModelMeta;
-	base_model_id?: string;
-	params: ModelParams;
-}
-
-export interface ModelMeta {
-	description?: string;
-	capabilities?: object;
-	profile_image_url?: string;
-}
-
-export interface ModelParams {}
-
-export type GlobalModelConfig = ModelConfig[];
-
-export const updateModelConfig = async (token: string, config: GlobalModelConfig) => {
-	let error = null;
-
-	const res = await fetch(`${WEBUI_BASE_URL}/api/config/models`, {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-			Authorization: `Bearer ${token}`
-		},
-		body: JSON.stringify({
-			models: config
-		})
-	})
-		.then(async (res) => {
-			if (!res.ok) throw await res.json();
-			return res.json();
-		})
-		.catch((err) => {
-			console.error(err);
-			error = err;
-			return null;
-		});
+	}).catch((err) => {
+		console.error(err);
+		error = err;
+		return null;
+	});
 
 	if (error) {
 		throw error;
