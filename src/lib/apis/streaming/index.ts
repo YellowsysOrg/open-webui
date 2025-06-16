@@ -41,55 +41,24 @@ export async function createOpenAITextStream(
 }
 
 async function* openAIStreamToIterator(
-	reader: ReadableStreamDefaultReader<ParsedEvent>
+        reader: ReadableStreamDefaultReader<ParsedEvent>
 ): AsyncGenerator<TextStreamUpdate> {
-	while (true) {
-		const { value, done } = await reader.read();
-		if (done) {
-			yield { done: true, value: '' };
-			break;
-		}
-		if (!value) {
-			continue;
-		}
-		const data = value.data;
-		if (data.startsWith('[DONE]')) {
-			yield { done: true, value: '' };
-			break;
-		}
-
-		try {
-			const parsedData = JSON.parse(data);
-			console.log(parsedData);
-
-			if (parsedData.error) {
-				yield { done: true, value: '', error: parsedData.error };
-				break;
-			}
-
-			if (parsedData.sources) {
-				yield { done: false, value: '', sources: parsedData.sources };
-				continue;
-			}
-
-			if (parsedData.selected_model_id) {
-				yield { done: false, value: '', selectedModelId: parsedData.selected_model_id };
-				continue;
-			}
-
-			if (parsedData.usage) {
-				yield { done: false, value: '', usage: parsedData.usage };
-				continue;
-			}
-
-			yield {
-				done: false,
-				value: parsedData.choices?.[0]?.delta?.content ?? ''
-			};
-		} catch (e) {
-			console.error('Error extracting delta from SSE event:', e);
-		}
-	}
+        while (true) {
+                const { value, done } = await reader.read();
+                if (done) {
+                        yield { done: true, value: '' };
+                        break;
+                }
+                if (!value) {
+                        continue;
+                }
+                const data = value.data;
+                if (data.startsWith('[DONE]')) {
+                        yield { done: true, value: '' };
+                        break;
+                }
+                yield { done: false, value: data };
+        }
 }
 
 // streamLargeDeltasAsRandomChunks will chunk large deltas (length > 5) into random sized chunks between 1-3 characters

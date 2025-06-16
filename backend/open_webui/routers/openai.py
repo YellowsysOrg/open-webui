@@ -94,6 +94,41 @@ async def cleanup_response(
         await session.close()
 
 
+async def stream_openai_tokens(
+    response: aiohttp.ClientResponse,
+    session: Optional[aiohttp.ClientSession] = None,
+):
+    """Yield individual tokens from an OpenAI SSE response."""
+    buffer = ""
+    try:
+        async for chunk in response.content.iter_any():
+            buffer += chunk.decode()
+            while "\n\n" in buffer:
+                event, buffer = buffer.split("\n\n", 1)
+                for line in event.split("\n"):
+                    if not line.startswith("data:"):
+                        continue
+                    data = line[5:].strip()
+                    if not data:
+                        continue
+                    if data == "[DONE]":
+                        yield "data: [DONE]\n\n"
+                        return
+                    try:
+                        payload = json.loads(data)
+                        token = (
+                            payload.get("choices", [{}])[0]
+                            .get("delta", {})
+                            .get("content")
+                        )
+                        if token:
+                            yield f"data: {token}\n\n"
+                    except Exception:
+                        continue
+    finally:
+        await cleanup_response(response, session)
+
+
 def openai_o_series_handler(payload):
     """
     Handle "o" series specific parameters
@@ -850,12 +885,9 @@ async def generate_chat_completion(
         if "text/event-stream" in r.headers.get("Content-Type", ""):
             streaming = True
             return StreamingResponse(
-                r.content,
+                stream_openai_tokens(r, session),
                 status_code=r.status,
-                headers=dict(r.headers),
-                background=BackgroundTask(
-                    cleanup_response, response=r, session=session
-                ),
+                media_type="text/event-stream",
             )
         else:
             try:
