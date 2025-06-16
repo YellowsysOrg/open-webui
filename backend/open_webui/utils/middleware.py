@@ -939,9 +939,11 @@ async def process_chat_payload(request, form_data, user, metadata, model):
                     )
                     if citation_id not in citation_idx:
                         citation_idx[citation_id] = len(citation_idx) + 1
+                    chunk_idx = doc_meta.get("chunk_index")
                     context_string += (
                         f'<source id="{citation_idx[citation_id]}"'
                         + (f' name="{source_name}"' if source_name else "")
+                        + (f' chunk="{chunk_idx}"' if chunk_idx is not None else "")
                         + f">{doc_context}</source>\n"
                     )
 
@@ -1865,6 +1867,12 @@ async def process_chat_response(
                                                         ] += delta_arguments
 
                                     value = delta.get("content")
+                                    if value:
+                                        value = re.sub(
+                                            r"§text\s*(\d+)§",
+                                            lambda m: f':::CustomText {"pdf_path": "path/to/pdf", "page": {m.group(1)}}:::',
+                                            value,
+                                        )
 
                                     reasoning_content = (
                                         delta.get("reasoning_content")

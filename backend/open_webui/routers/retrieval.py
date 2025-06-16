@@ -1167,6 +1167,7 @@ def save_docs_to_vector_db(
         {
             **doc.metadata,
             **(metadata if metadata else {}),
+            "chunk_index": idx,
             "embedding_config": json.dumps(
                 {
                     "engine": request.app.state.config.RAG_EMBEDDING_ENGINE,
@@ -1174,7 +1175,7 @@ def save_docs_to_vector_db(
                 }
             ),
         }
-        for doc in docs
+        for idx, doc in enumerate(docs)
     ]
 
     # ChromaDB does not like datetime formats
