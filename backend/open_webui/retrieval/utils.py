@@ -603,6 +603,10 @@ def get_sources_from_files(
                         "source": context["file"],
                         "document": context["documents"][0],
                         "metadata": context["metadatas"][0],
+                        "indices": [
+                            meta.get("chunk_index", idx)
+                            for idx, meta in enumerate(context["metadatas"][0])
+                        ],
                     }
                     if "distances" in context and context["distances"]:
                         source["distances"] = context["distances"][0]
